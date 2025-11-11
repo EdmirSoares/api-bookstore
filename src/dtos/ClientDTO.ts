@@ -17,7 +17,7 @@ export class CreateClientDTO {
 
   @IsOptional()
   @IsString({ message: 'O telefone deve ser uma string' })
-  @MaxLength(20, { message: 'O telefone deve ter no máximo 20 caracteres' })
+  @MaxLength(15, { message: 'O telefone deve ter no máximo 15 caracteres' })
   phone?: string;
 
   @IsOptional()
