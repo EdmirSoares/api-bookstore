@@ -34,6 +34,17 @@ export class UpdateLoanDTO {
   status?: LoanStatus;
 }
 
+
+/**
+ * DTO para devolução de um livro
+ * @description Valida a data de devolução real ao devolver um livro
+ */
+export class ReturnLoanDTO {
+  @IsOptional()
+  @IsDateString({}, { message: 'Data de devolução real inválida' })
+  actualReturnDate?: string;
+}
+
 /**
  * DTO para respostas de empréstimo
  * @description Define a estrutura dos dados de empréstimo enviados aos clientes
