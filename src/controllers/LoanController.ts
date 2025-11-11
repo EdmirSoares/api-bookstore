@@ -233,7 +233,7 @@ export class LoanController extends BaseController<Loan> {
             if (isNaN(bookIdNum)) {
                 return res
                     .status(400)
-                    .json({ error: "Usuário não encontrado" });
+                    .json({ error: "Livro inválido ou não encontrado" });
             }
 
             const loans = await this.repository.find({

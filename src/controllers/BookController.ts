@@ -3,6 +3,7 @@ import { AppDataSource } from '../config/database';
 import { Book, BookCategory } from '../entities/Book';
 import { BaseController } from './BaseController';
 import { CreateBookDTO, UpdateBookDTO, BookResponseDTO } from '../dtos/BookDTO';
+import { compressBookCover } from '../config/multer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -56,8 +57,10 @@ export class BookController extends BaseController<Book> {
       const createDTO = req.body as CreateBookDTO;
       
       const bookData: any = { ...createDTO };
+
       if (req.file) {
-        bookData.coverImage = req.file.filename;
+        const compressedPath = await compressBookCover(req.file.path, 'webp');
+        bookData.coverImage = compressedPath;
       }
       
       const book = this.repository.create(bookData);
@@ -95,15 +98,16 @@ export class BookController extends BaseController<Book> {
       
       const updateDTO = req.body as UpdateBookDTO;
       const updateData: any = { ...updateDTO };
-      
+            // Se houver novo arquivo, comprimir e deletar o antigo
       if (req.file) {
         if (book.coverImage) {
-          const oldImagePath = path.join(process.env.UPLOAD_PATH || './uploads', 'covers', book.coverImage);
+          const oldImagePath = path.join(process.env.UPLOAD_PATH || './uploads', book.coverImage);
           if (fs.existsSync(oldImagePath)) {
             fs.unlinkSync(oldImagePath);
           }
         }
-        updateData.coverImage = req.file.filename;
+        const compressedPath = await compressBookCover(req.file.path, 'webp');
+        updateData.coverImage = compressedPath;
       }
       
       this.repository.merge(book, updateData);
