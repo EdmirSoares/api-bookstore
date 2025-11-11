@@ -24,8 +24,14 @@ export class ClientController extends BaseController<Client> {
     async findById(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;
+            const clientId = parseInt(id);
+            
+            if (isNaN(clientId)) {
+                return res.status(400).json({ error: 'Invalid client ID' });
+            }
+            
             const client = await this.repository.findOne({
-                where: { id: parseInt(id) },
+                where: { id: clientId },
                 relations: ["loans", "loans.book"],
             });
 
@@ -43,6 +49,12 @@ export class ClientController extends BaseController<Client> {
     async findByEmail(req: Request, res: Response): Promise<Response> {
         try {
             const { email } = req.params;
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ error: 'Invalid email format' });
+            }
+            
             const client = await this.repository.findOne({
                 where: { email },
                 relations: ["loans", "loans.book"],
@@ -67,6 +79,10 @@ export class ClientController extends BaseController<Client> {
                 return res
                     .status(400)
                     .json({ error: "Name parameter is required" });
+            }
+            
+            if (typeof name !== 'string') {
+                return res.status(400).json({ error: 'Name must be a string' });
             }
 
             const clients = await this.repository
