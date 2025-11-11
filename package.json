@@ -1,7 +1,7 @@
 {
-  "name": "biblioteca-backend",
+  "name": "api-bookstore",
   "version": "1.0.0",
-  "description": "Backend para sistema de biblioteca com arquitetura MVC",
+  "description": "Backend para sistema de livraria com arquitetura MVC",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
