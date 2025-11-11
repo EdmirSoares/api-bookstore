@@ -1,47 +1,47 @@
-version: '3.8'
+name: bookstore
 
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: biblioteca_db
+    container_name: bookstore_db
     environment:
-      POSTGRES_DB: biblioteca
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - biblioteca_network
+      - bookstore_network
 
   # Backend API
   api:
     build: .
-    container_name: biblioteca_api
+    container_name: bookstore_api
     environment:
-      NODE_ENV: production
-      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
       DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: biblioteca
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
       UPLOAD_PATH: /app/uploads
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
       - postgres
     networks:
-      - biblioteca_network
+      - bookstore_network
     command: sh -c "sleep 10 && npm run migration:run && npm start"
 
 volumes:
   postgres_data:
 
 networks:
-  biblioteca_network:
+  bookstore_network:
     driver: bridge
