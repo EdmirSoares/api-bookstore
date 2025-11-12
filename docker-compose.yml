@@ -1,27 +1,26 @@
 name: bookstore
 
 services:
-  # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: bookstore_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bookstore_network
+    restart: unless-stopped
 
-  # Backend API
   api:
     build: .
     container_name: bookstore_api
     environment:
-      NODE_ENV: ${NODE_ENV:-production}
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: ${PORT:-3000}
       DB_HOST: postgres
       DB_PORT: ${DB_PORT:-5432}
@@ -30,13 +29,15 @@ services:
       DB_NAME: ${DB_NAME}
       UPLOAD_PATH: /app/uploads
     ports:
-      - "${PORT:-3000}:3000"
+      - "3000:3000"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
     networks:
       - bookstore_network
+    restart: unless-stopped
     command: sh -c "sleep 10 && npm run migration:run && npm start"
 
 volumes:
