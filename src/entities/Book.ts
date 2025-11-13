@@ -80,8 +80,8 @@ export class Book {
   @Column({ type: 'text', nullable: true })
   sobre: string;
 
-  @Column({ name: 'cover_image', nullable: true })
-  coverImage: string;
+  @Column({ type: 'varchar', name: 'cover_image', nullable: true })
+  coverImage: string | null;
 
   @OneToMany(() => Loan, loan => loan.book)
   loans: Loan[];

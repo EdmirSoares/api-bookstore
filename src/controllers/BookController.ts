@@ -52,19 +52,9 @@ export class BookController extends BaseController<Book> {
   async create(req: Request, res: Response): Promise<Response> {
     try {
       console.info('Request body:', JSON.stringify(req.body, null, 2));
-      console.info('File info:', req.file || 'No file uploaded');
       
       const createDTO = req.body as CreateBookDTO;
-      
-      const bookData: any = { ...createDTO };
-
-      if (req.file) {
-        const compressedPath = await compressBookCover(req.file.path, 'webp');
-        bookData.coverImage = compressedPath;
-      }
-      
-      const book = this.repository.create(bookData);
-      console.info('Book created:', book);
+      const book = this.repository.create(createDTO);
       
       const savedBook = await this.repository.save(book);
       console.info('Book saved:', savedBook);
@@ -97,20 +87,7 @@ export class BookController extends BaseController<Book> {
       }
       
       const updateDTO = req.body as UpdateBookDTO;
-      const updateData: any = { ...updateDTO };
-            // Se houver novo arquivo, comprimir e deletar o antigo
-      if (req.file) {
-        if (book.coverImage) {
-          const oldImagePath = path.join(process.env.UPLOAD_PATH || './uploads', book.coverImage);
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
-        }
-        const compressedPath = await compressBookCover(req.file.path, 'webp');
-        updateData.coverImage = compressedPath;
-      }
-      
-      this.repository.merge(book, updateData);
+      this.repository.merge(book, updateDTO);
       const updatedBook = await this.repository.save(book);
       
       const responseDTO = BookResponseDTO.fromEntity(updatedBook);
@@ -270,7 +247,93 @@ export class BookController extends BaseController<Book> {
       const bookDTOs = BookResponseDTO.fromEntityArray(books);
       return res.json(bookDTOs);
     } catch (error) {
-      console.error('Error searching by category:', error);
+      console.error('Erro ao buscar por categoria:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async uploadCover(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const bookId = parseInt(id);
+      
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: 'ID do livro inválido' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'Nenhuma imagem foi enviada' });
+      }
+      
+      const book = await this.repository.findOne({ where: { id: bookId } });
+      
+      if (!book) {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(404).json({ error: 'Livro não encontrado' });
+      }
+      
+      if (book.coverImage) {
+        const oldImagePath = path.join(process.env.UPLOAD_PATH || './uploads', book.coverImage);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+          console.info('Antiga imagem:', oldImagePath);
+        }
+      }
+      
+      const compressedPath = await compressBookCover(req.file.path, 'webp');
+      book.coverImage = compressedPath;
+      
+      const updatedBook = await this.repository.save(book);
+      console.info('Imagem de capa atualizada para o livro:', bookId);
+      
+      const responseDTO = BookResponseDTO.fromEntity(updatedBook);
+      return res.json(responseDTO);
+    } catch (error) {
+      console.error('Erro ao enviar capa:', error);
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(500).json({ 
+        error: 'Erro ao processar imagem',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+      });
+    }
+  }
+
+  async deleteCover(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const bookId = parseInt(id);
+      
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: 'ID do livro inválido' });
+      }
+      
+      const book = await this.repository.findOne({ where: { id: bookId } });
+      
+      if (!book) {
+        return res.status(404).json({ error: 'Livro não encontrado' });
+      }
+      
+      if (!book.coverImage) {
+        return res.status(404).json({ error: 'Este livro não possui imagem de capa' });
+      }
+      
+      const imagePath = path.join(process.env.UPLOAD_PATH || './uploads', book.coverImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+        console.info('Imagem de capa deletada:', imagePath);
+      }
+      
+      book.coverImage = null;
+      const updatedBook = await this.repository.save(book);
+      
+      const responseDTO = BookResponseDTO.fromEntity(updatedBook);
+      return res.json(responseDTO);
+    } catch (error) {
+      console.error('Erro ao deletar capa:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }

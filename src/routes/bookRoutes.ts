@@ -63,35 +63,51 @@ router.get("/:id", (req, res) => bookController.findById(req, res));
 /**
  * @route POST /books
  * @description Cria um novo livro
- * @body {CreateBookDTO} Dados do livro
- * @file {File} cover - Imagem de capa do livro opcional (JPG/PNG, máx 5MB)
- * @middleware upload.single('cover') - Processa upload de arquivo
+ * @body {CreateBookDTO} Dados do livro (JSON)
  * @middleware validateDTO(CreateBookDTO) - Valida corpo da requisição
  * @returns {BookResponseDTO} Livro criado
  */
 router.post(
     "/",
-    upload.single("cover"),
     validateDTO(CreateBookDTO),
     (req, res) => bookController.create(req, res)
 );
 
 /**
  * @route PUT /books/:id
- * @description Atualiza um livro
+ * @description Atualiza dados do livro
  * @param {number} id - ID do livro
- * @body {UpdateBookDTO} Dados atualizados do livro
- * @file {File} cover - Nova imagem de capa do livro opcional (JPG/PNG, máx 5MB)
- * @middleware upload.single('cover') - Processa upload de arquivo
+ * @body {UpdateBookDTO} Dados atualizados do livro (JSON)
  * @middleware validateDTO(UpdateBookDTO, true) - Valida corpo da requisição (atualização parcial)
  * @returns {BookResponseDTO} Livro atualizado
  */
 router.put(
     "/:id",
-    upload.single("cover"),
     validateDTO(UpdateBookDTO, true),
     (req, res) => bookController.update(req, res)
 );
+
+/**
+ * @route PATCH /books/:id/cover
+ * @description Upload ou atualiza a imagem de capa do livro
+ * @param {number} id - ID do livro
+ * @file {File} coverImage - Imagem de capa (JPG/PNG/WebP, máx 15MB)
+ * @middleware upload.single('coverImage') - Processa upload de arquivo
+ * @returns {BookResponseDTO} Livro com capa atualizada
+ */
+router.patch(
+    "/:id/cover",
+    upload.single("coverImage"),
+    (req, res) => bookController.uploadCover(req, res)
+);
+
+/**
+ * @route DELETE /books/:id/cover
+ * @description Remove a imagem de capa do livro
+ * @param {number} id - ID do livro
+ * @returns {BookResponseDTO} Livro sem imagem de capa
+ */
+router.delete("/:id/cover", (req, res) => bookController.deleteCover(req, res));
 
 /**
  * @route PATCH /books/:id/stock

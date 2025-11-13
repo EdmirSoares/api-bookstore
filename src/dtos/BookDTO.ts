@@ -31,10 +31,6 @@ export class CreateBookDTO {
   @IsOptional()
   @IsString()
   sobre?: string;
-
-  @IsOptional()
-  @IsString()
-  coverImage?: string;
 }
 
 /**
@@ -70,10 +66,6 @@ export class UpdateBookDTO {
   @IsOptional()
   @IsString()
   sobre?: string;
-
-  @IsOptional()
-  @IsString()
-  coverImage?: string;
 }
 
 /**
